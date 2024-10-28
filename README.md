@@ -6,6 +6,11 @@ This project contains automated tests using Selenium. Follow the steps below to 
 
 Make sure you have Python installed on your machine. You can download it from [python.org](https://www.python.org/downloads/).
 
+### 1 line
+```
+git clone https://github.com/zungcao1004/vigilant-octo-waddle.git && cd vigilant-octo-waddle/ && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python main.py
+```
+
 ## Steps
 
 ### 1. Clone the repository
