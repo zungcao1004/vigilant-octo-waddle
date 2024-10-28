@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 Run all the test files using the following command:
 ```
-python -m unittest discover -s tests -p "*.py"
+python main.py
 ```
 
 ### 6. Deactivate the Virtual Environment (Optional)
