@@ -138,19 +138,27 @@ def test_successful_deposit_with_valid_values():
     account_no_field = driver.find_element(By.NAME, "accountno")
     account_no_field.clear()
     account_no_field.send_keys("139424")  # Enter valid Account ID
+
     amount_field = driver.find_element(By.NAME, "ammount")
     amount_field.clear()
     amount_field.send_keys("1")  # Enter valid Amount
+
     description_field = driver.find_element(By.NAME, "desc")
     description_field.clear()
     description_field.send_keys("gg")  # Enter valid Description
+
     driver.find_element(By.NAME, "AccSubmit").click()  # Click Submit
 
-    # Check if the deposit was successful (adjust the success message check as needed)
-    success_message_element = WebDriverWait(driver, 2).until(
-        ec.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'Transaction successful')]"))
-    )
-    assert success_message_element is not None, "Deposit was not successful."
+    try:
+        # Check if the deposit was successful
+        success_message_element = WebDriverWait(driver, 2).until(
+            ec.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'Transaction successful')]"))
+        )
+        assert success_message_element is not None, "Deposit was not successful."
+        print("Success: Deposit was successful.")
+    except Exception:
+        raise AssertionError("Deposit submission failed: Success message not displayed.")
+
 
 
 # Execute test cases

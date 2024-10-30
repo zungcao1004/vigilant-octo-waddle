@@ -111,21 +111,26 @@ def test_valid_deposit_submission():
     amount_field = driver.find_element(By.NAME, "ammount")
     description_field = driver.find_element(By.NAME, "desc")
 
+    # Clear fields before input
     account_field.clear()
     amount_field.clear()
     description_field.clear()
 
+    # Input test data
     account_field.send_keys("139424")
     amount_field.send_keys("1")
     description_field.send_keys("gg")
     driver.find_element(By.NAME, "AccSubmit").click()
 
-    WebDriverWait(driver, 2).until(
-        ec.text_to_be_present_in_element(
-            (By.CLASS_NAME, "heading3"), "Transaction details of Deposit for Account"
+    try:
+        WebDriverWait(driver, 2).until(
+            ec.text_to_be_present_in_element(
+                (By.CLASS_NAME, "heading3"), "Transaction details of Deposit for Account"
+            )
         )
-    )
-    print("Success: Deposit submission success message displayed.")
+        print("Success: Deposit submission success message displayed.")
+    except Exception:
+        raise AssertionError("Deposit submission failed: Success message not displayed.")
 
 
 # Running each test and storing results
