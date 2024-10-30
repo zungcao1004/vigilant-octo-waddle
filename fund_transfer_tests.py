@@ -3,139 +3,243 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+import traceback
 
-# Initialize the WebDriver
-driver = webdriver.Firefox()
-driver.get("https://www.demo.guru99.com/V4/manager/FundTransInput.php")
+# Initialize the WebDriver (Ensure you've set up the appropriate WebDriver path)
+driver = webdriver.Chrome()
+driver.get("https://www.demo.guru99.com/V4/index.php")
 
 
-def reload_page():
-    driver.refresh()  # Refresh the page
+# Login function
+def login(username, password):
+    username_field = driver.find_element(By.NAME, "uid")
+    username_field.send_keys(username)
+    password_field = driver.find_element(By.NAME, "password")
+    password_field.send_keys(password)
+    driver.find_element(By.NAME, "btnLogin").click()
     WebDriverWait(driver, 10).until(
-        ec.visibility_of_element_located((By.NAME, "payersaccount"))  # Wait for the payers account field to be visible
+        ec.text_to_be_present_in_element(
+            (By.CLASS_NAME, "heading3"), "Welcome To Manager's Page of Guru99 Bank"
+        )
     )
+    driver.get("https://www.demo.guru99.com/V4/manager/FundTransInput.php")
 
 
-# Test Functions
-# T82: Payers Account Number must not be blank
-def test_payers_account_no_not_blank():
+# Run login
+login("mngr595557", "sApEgad")
+
+# List to track test results
+test_results = []
+
+
+# Utility function for error message checks
+def check_error_message(element_id, expected_message):
+    message_element = driver.find_element(By.ID, element_id)
+    assert message_element.text == expected_message, f"Expected '{expected_message}', but got '{message_element.text}'"
+
+
+# Function to run each test case
+def run_test(test_func):
+    try:
+        test_func()
+        test_results.append((test_func.__name__, "PASS"))
+    except AssertionError as e:
+        test_results.append((test_func.__name__, "FAIL", str(e)))
+    except Exception:
+        test_results.append((test_func.__name__, "ERROR", traceback.format_exc()))
+
+
+# Fund Transfer Test Cases
+def test_verify_payers_account_number_not_empty():
     payers_account_field = driver.find_element(By.NAME, "payersaccount")
-    payers_account_field.send_keys(Keys.TAB)  # Move to the next field
-    error_message = driver.find_element(By.ID, "message10").text
-    assert "Payers Account Number must not be blank" in error_message, ("Expected error for blank Payers Account "
-                                                                        "Number not displayed")
-    reload_page()
+    payers_account_field.clear()  # Leave it blank
+    payers_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message10", "Payers Account Number must not be blank")
 
 
-# T83: Special characters not allowed in Payers Account Number
-def test_payers_account_no_no_special_characters():
+def test_special_characters_not_allowed_in_payers_account():
     payers_account_field = driver.find_element(By.NAME, "payersaccount")
-    payers_account_field.send_keys("@#$%")
-    payers_account_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message10").text
-    assert "Special characters are not allowed" in error_message, ("Expected error for special characters in Payers "
-                                                                   "Account Number not displayed")
-    reload_page()
+    payers_account_field.clear()
+    payers_account_field.send_keys("!@#$%^&*()")  # Enter special characters
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message10", "Special characters are not allowed")
 
 
-# T84: Characters not allowed in Payers Account Number
-def test_payers_account_no_no_characters():
+def test_alphabetic_characters_not_allowed_in_payers_account():
     payers_account_field = driver.find_element(By.NAME, "payersaccount")
-    payers_account_field.send_keys("abcd")
-    payers_account_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message10").text
-    assert "Characters are not allowed" in error_message, ("Expected error for characters in Payers Account Number not "
-                                                           "displayed")
-    reload_page()
+    payers_account_field.clear()
+    payers_account_field.send_keys("abcdef")  # Enter alphabet characters
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message10", "Characters are not allowed")
 
 
-# T85: Payees Account Number must not be blank
-def test_payees_account_no_not_blank():
-    payee_account_field = driver.find_element(By.NAME, "payeeaccount")
-    payee_account_field.send_keys(Keys.TAB)  # Move to the next field
-    error_message = driver.find_element(By.ID, "message11").text
-    assert "Payees Account Number must not be blank" in error_message, ("Expected error for blank Payees Account "
-                                                                        "Number not displayed")
-    reload_page()
+def test_verify_payees_account_number_not_empty():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.clear()  # Leave it blank
+    payees_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message11", "Payees Account Number must not be blank")
 
 
-# T86: Special characters not allowed in Payees Account Number
-def test_payees_account_no_no_special_characters():
-    payee_account_field = driver.find_element(By.NAME, "payeeaccount")
-    payee_account_field.send_keys("@#$%")
-    payee_account_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message11").text
-    assert "Special characters are not allowed" in error_message, ("Expected error for special characters in Payees "
-                                                                   "Account Number not displayed")
-    reload_page()
+def test_special_characters_not_allowed_in_payees_account():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.clear()
+    payees_account_field.send_keys("!@#$%^&*()")  # Enter special characters
+    payees_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message11", "Special characters are not allowed")
 
 
-# T87: Characters not allowed in Payees Account Number
-def test_payees_account_no_no_characters():
-    payee_account_field = driver.find_element(By.NAME, "payeeaccount")
-    payee_account_field.send_keys("abcd")
-    payee_account_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message11").text
-    assert "Characters are not allowed" in error_message, ("Expected error for characters in Payees Account Number not "
-                                                           "displayed")
-    reload_page()
+def test_alphabetic_characters_not_allowed_in_payees_account():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.clear()
+    payees_account_field.send_keys("abcdef")  # Enter alphabet characters
+    payees_account_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message11", "Characters are not allowed")
 
 
-# T88: Amount Field must not be blank
-def test_amount_not_blank():
+def test_verify_amount_not_empty():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys("139425")  # Valid Payees Account
     amount_field = driver.find_element(By.NAME, "ammount")
-    amount_field.send_keys(Keys.TAB)  # Move to the next field
-    error_message = driver.find_element(By.ID, "message1").text
-    assert "Amount field must not be blank" in error_message, "Expected error for blank Amount field not displayed"
-    reload_page()
+    amount_field.clear()  # Leave Amount blank
+    amount_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message1", "Amount field must not be blank")
 
 
-# T89: Characters not allowed in Amount Field
-def test_amount_no_characters():
+def test_special_characters_not_allowed_in_amount():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys("139425")  # Valid Payees Account
     amount_field = driver.find_element(By.NAME, "ammount")
-    amount_field.send_keys("abcde")
-    amount_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message1").text
-    assert "Characters are not allowed" in error_message, "Expected error for characters in Amount field not displayed"
-    reload_page()
+    amount_field.clear()
+    amount_field.send_keys("!@#$%")  # Enter special characters
+    amount_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message1", "Special characters are not allowed")
 
 
-# T90: Special characters not allowed in Amount Field
-def test_amount_no_special_characters():
+def test_alphabetic_characters_not_allowed_in_amount():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys("139425")  # Valid Payees Account
     amount_field = driver.find_element(By.NAME, "ammount")
-    amount_field.send_keys("!@#$")
-    amount_field.send_keys(Keys.TAB)
-    error_message = driver.find_element(By.ID, "message1").text
-    assert "Special characters are not allowed" in error_message, ("Expected error for special characters in Amount "
-                                                                   "field not displayed")
-    reload_page()
+    amount_field.clear()
+    amount_field.send_keys("abc")  # Enter alphabet characters
+    amount_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message1", "Characters are not allowed")
 
 
-# T91: Description cannot be blank
-def test_description_not_blank():
+def test_verify_description_not_empty():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys("139425")  # Valid Payees Account
+    amount_field = driver.find_element(By.NAME, "ammount")
+    amount_field.send_keys("100")  # Valid Amount
     description_field = driver.find_element(By.NAME, "desc")
-    description_field.send_keys(Keys.TAB)  # Move to the next field
-    error_message = driver.find_element(By.ID, "message17").text
-    assert "Description can not be blank" in error_message, "Expected error for blank Description not displayed"
-    reload_page()
+    description_field.clear()  # Leave Description blank
+    description_field.send_keys(Keys.TAB)  # Move focus to trigger validation
+
+    # Check for the expected error message
+    check_error_message("message17", "Description can not be blank")
 
 
-try:
-    # Run tests
-    test_payers_account_no_not_blank()
-    test_payers_account_no_no_special_characters()
-    test_payers_account_no_no_characters()
-    test_payees_account_no_not_blank()
-    test_payees_account_no_no_special_characters()
-    test_payees_account_no_no_characters()
-    test_amount_not_blank()
-    test_amount_no_characters()
-    test_amount_no_special_characters()
-    test_description_not_blank()
+def test_invalid_transfer_amount():
+    driver.get("https://www.demo.guru99.com/V4/manager/FundTransInput.php")
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.send_keys("139424")  # Valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.send_keys("139425")  # Valid Payees Account
+    amount_field = driver.find_element(By.NAME, "ammount")
+    amount_field.send_keys("999999")  # Enter an invalid transfer amount
+    description_field = driver.find_element(By.NAME, "desc")
+    description_field.send_keys("Test transfer")  # Valid Description
+    driver.find_element(By.NAME, "AccSubmit").click()  # Click Submit
 
-except Exception as e:
-    print("Test failed:", e)
+    # Check if the expected error message appears
+    try:
+        # Wait for the alert to be present
+        WebDriverWait(driver, 10).until(ec.alert_is_present())
+        alert = driver.switch_to.alert  # Switch to the alert
+        assert alert.text == "Transfer Failed. Account Balance low!!", f"Expected alert message: 'Transfer Failed. Account Balance low!!', but got: '{alert.text}'"
+        alert.accept()  # Accept the alert to close it
+    except Exception:
+        assert False, "Expected alert not displayed."
 
-finally:
-    # Close the browser after tests
-    driver.quit()
+
+def test_successful_fund_transfer():
+    payers_account_field = driver.find_element(By.NAME, "payersaccount")
+    payers_account_field.clear()
+    payers_account_field.send_keys("139424")  # Enter valid Payers Account
+    payees_account_field = driver.find_element(By.NAME, "payeeaccount")
+    payees_account_field.clear()
+    payees_account_field.send_keys("139425")  # Enter valid Payees Account
+    amount_field = driver.find_element(By.NAME, "ammount")
+    amount_field.clear()
+    amount_field.send_keys("1")  # Enter valid Amount
+    description_field = driver.find_element(By.NAME, "desc")
+    description_field.clear()
+    description_field.send_keys("Transfer Test")  # Enter valid Description
+    driver.find_element(By.NAME, "AccSubmit").click()  # Click Submit
+
+    # Check for the successful transfer message (adjust according to your application)
+    success_message_element = WebDriverWait(driver, 10).until(
+        ec.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'Fund Transfer Details')]"))
+    )
+    assert success_message_element is not None, "Expected success message for fund transfer not displayed."
+
+
+# Running all test cases
+test_cases = [
+    test_verify_payers_account_number_not_empty,
+    test_special_characters_not_allowed_in_payers_account,
+    test_alphabetic_characters_not_allowed_in_payers_account,
+    test_verify_payees_account_number_not_empty,
+    test_special_characters_not_allowed_in_payees_account,
+    test_alphabetic_characters_not_allowed_in_payees_account,
+    test_verify_amount_not_empty,
+    test_special_characters_not_allowed_in_amount,
+    test_alphabetic_characters_not_allowed_in_amount,
+    test_verify_description_not_empty,
+    test_successful_fund_transfer,
+    test_invalid_transfer_amount
+]
+
+for test_case in test_cases:
+    run_test(test_case)
+
+# Print test results
+print("Test Results:")
+for result in test_results:
+    print(result)
+
+# Close the driver
+driver.quit()
