@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 
 # Initialize the WebDriver
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 
 print("Current session is {}".format(driver.session_id))
 
